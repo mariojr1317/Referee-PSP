@@ -1,7 +1,9 @@
 #include "graphics.h"
 #include <pspkernel.h>
-#include <display.h>
+#include <pspdisplay.h>
+#include <pspgu.h>
 #include <png.h>
+#include <setjmp.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <malloc.h>
