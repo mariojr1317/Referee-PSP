@@ -25,23 +25,25 @@ static int getNextPowerOf2(int n) {
     return p;
 }
 
-// Buscador de archivos en múltiples rutas posibles
 static FILE* abrirArchivo(const char* filename) {
+    if (!filename) return NULL;
     FILE* fp = fopen(filename, "rb");
     if (fp) return fp;
 
-    char altPath[512];
-    snprintf(altPath, sizeof(altPath), "./%s", filename);
-    fp = fopen(altPath, "rb");
+    char buf[512];
+    snprintf(buf, sizeof(buf), "./%s", filename);
+    fp = fopen(buf, "rb");
     if (fp) return fp;
 
-    snprintf(altPath, sizeof(altPath), "ArbitroPSP/%s", filename);
-    fp = fopen(altPath, "rb");
+    snprintf(buf, sizeof(buf), "ms0:/PSP/GAME/ArbitroPSP/%s", filename);
+    fp = fopen(buf, "rb");
     if (fp) return fp;
 
-    snprintf(altPath, sizeof(altPath), "ms0:/PSP/GAME/ArbitroPSP/%s", filename);
-    fp = fopen(altPath, "rb");
-    if (fp) return fp;
+    if (strncmp(filename, "assets/", 7) == 0) {
+        snprintf(buf, sizeof(buf), "%s", filename + 7);
+        fp = fopen(buf, "rb");
+        if (fp) return fp;
+    }
 
     return NULL;
 }
@@ -71,7 +73,7 @@ void initGraphics() {
 
 void startFrame() {
     sceGuStart(GU_DIRECT, list);
-    sceGuClearColor(0xFF662211);
+    sceGuClearColor(0xFF1E5B22); // Verde Césped de fondo por defecto
     sceGuClear(GU_COLOR_BUFFER_BIT | GU_DEPTH_BUFFER_BIT);
 }
 
@@ -83,15 +85,13 @@ void endFrame() {
 }
 
 Image* loadPNG(const char* filename) {
-    png_structp png_ptr;
-    png_infop info_ptr;
     FILE* fp = abrirArchivo(filename);
     if (!fp) return NULL;
 
-    png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+    png_structp png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
     if (!png_ptr) { fclose(fp); return NULL; }
 
-    info_ptr = png_create_info_struct(png_ptr);
+    png_infop info_ptr = png_create_info_struct(png_ptr);
     if (!info_ptr) {
         png_destroy_read_struct(&png_ptr, NULL, NULL);
         fclose(fp);
@@ -107,16 +107,13 @@ Image* loadPNG(const char* filename) {
     png_init_io(png_ptr, fp);
     png_read_info(png_ptr, info_ptr);
 
-    int width = png_get_image_width(png_ptr, info_ptr);
-    int height = png_get_image_height(png_ptr, info_ptr);
-    png_byte color_type = png_get_color_type(png_ptr, info_ptr);
-    png_byte bit_depth = png_get_bit_depth(png_ptr, info_ptr);
+    png_uint_32 width = png_get_image_width(png_ptr, info_ptr);
+    png_uint_32 height = png_get_image_height(png_ptr, info_ptr);
 
-    if (bit_depth == 16) png_set_strip_16(png_ptr);
-    if (color_type == PNG_COLOR_TYPE_PALETTE) png_set_palette_to_rgb(png_ptr);
-    if (color_type == PNG_COLOR_TYPE_GRAY && bit_depth < 8) png_set_expand_gray_1_2_4_to_8(png_ptr);
-    if (png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS)) png_set_tRNS_to_alpha(png_ptr);
-    if (color_type == PNG_COLOR_TYPE_RGB || color_type == PNG_COLOR_TYPE_GRAY) png_set_add_alpha(png_ptr, 0xFF, PNG_FILLER_AFTER);
+    png_set_expand(png_ptr);
+    png_set_strip_16(png_ptr);
+    png_set_gray_to_rgb(png_ptr);
+    png_set_add_alpha(png_ptr, 0xFF, PNG_FILLER_AFTER);
 
     png_read_update_info(png_ptr, info_ptr);
 
@@ -144,12 +141,13 @@ Image* loadPNG(const char* filename) {
     }
 
     png_bytep* row_pointers = (png_bytep*)malloc(sizeof(png_bytep) * height);
-    for (int y = 0; y < height; y++) {
+    for (png_uint_32 y = 0; y < height; y++) {
         row_pointers[y] = (png_byte*)(img->data + y * texWidth);
     }
 
     png_read_image(png_ptr, row_pointers);
     free(row_pointers);
+
     png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
     fclose(fp);
 
@@ -167,6 +165,7 @@ void freeImage(Image* img) {
 void drawImage(Image* img, int x, int y, int w, int h) {
     if (!img || !img->data) return;
 
+    sceGuEnable(GU_TEXTURE_2D);
     sceGuTexMode(GU_PSM_8888, 0, 0, 0);
     sceGuTexImage(0, img->textureWidth, img->textureHeight, img->textureWidth, img->data);
     sceGuTexFunc(GU_TFX_REPLACE, GU_TCC_RGBA);
