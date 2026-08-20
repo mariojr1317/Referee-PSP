@@ -30,18 +30,9 @@ void emitirPitido(int frecuenciaHz, int duracionMs) {
     sceAudioChRelease(canal);
 }
 
-void sonarSilbato() {
-    emitirPitido(1800, 250);
-}
-
-void sonarError() {
-    emitirPitido(300, 400);
-}
-
-void sonarMenu() {
-    emitirPitido(800, 50);
-}
-
+void sonarSilbato() { emitirPitido(1800, 250); }
+void sonarError() { emitirPitido(300, 400); }
+void sonarMenu() { emitirPitido(800, 50); }
 void sonarFinJuego() {
     emitirPitido(1500, 200);
     sceKernelDelayThread(100000);
