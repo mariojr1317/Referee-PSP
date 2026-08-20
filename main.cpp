@@ -30,7 +30,6 @@ int SetupCallbacks(void) {
 int main(int argc, char* argv[]) {
     SetupCallbacks();
 
-    // Fijar el directorio de trabajo donde se encuentra el EBOOT
     if (argc > 0 && argv[0]) {
         char dir[256];
         strncpy(dir, argv[0], sizeof(dir));
@@ -59,12 +58,28 @@ int main(int argc, char* argv[]) {
 
         startFrame();
 
-        if (imgArbitro) drawImage(imgArbitro, 180, 0, 300, 272);
+        // Renderizado de las imágenes si existen
+        if (imgArbitro) {
+            drawImage(imgArbitro, 180, 0, 300, 272);
+        } else {
+            // Recuadro de respaldo si no encuentra referee_main.png
+            drawRect(180, 20, 280, 230, 0xFF005500); 
+        }
 
         int posX = 15 + (seleccionMenu * 75);
-        if (imgBox) drawImage(imgBox, posX, 110, 70, 70);
+        if (imgBox) {
+            drawImage(imgBox, posX, 110, 70, 70);
+        } else {
+            // Cuadro de selección de respaldo en amarillo
+            drawRect(posX, 110, 70, 70, 0xFF00FFFF); 
+        }
 
-        if (imgIconoNueva) drawImage(imgIconoNueva, 20, 115, 60, 60);
+        if (imgIconoNueva) {
+            drawImage(imgIconoNueva, 20, 115, 60, 60);
+        } else {
+            // Icono de respaldo en blanco
+            drawRect(20, 115, 60, 60, 0xFFFFFFFF); 
+        }
 
         endFrame();
 
