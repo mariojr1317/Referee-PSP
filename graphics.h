@@ -17,5 +17,6 @@ void endFrame();
 Image* loadPNG(const char* filename);
 void freeImage(Image* img);
 void drawImage(Image* img, int x, int y, int w, int h);
+void drawRect(int x, int y, int w, int h, unsigned int color);
 
 #endif
