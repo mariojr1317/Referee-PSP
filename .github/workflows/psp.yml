@@ -1,0 +1,50 @@
+name: Build PSP ISO & Package
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: pspdev/pspdev:latest
+
+    steps:
+      - name: Descargar Código Fuente
+        uses: actions/checkout@v4
+
+      - name: Compilar Juego PSP
+        run: |
+          make
+
+      - name: Crear ISO y Paquete ZIP
+        run: |
+          # 1. Instalar herramienta de creación de ISO
+          apt-get update && apt-get install -y genisoimage zip
+
+          # 2. Crear Paquete ZIP para tarjeta de memoria (ms0:/PSP/GAME/ArbitroPSP/)
+          mkdir -p ArbitroPSP
+          cp EBOOT.PBP ArbitroPSP/ 2>/dev/null || true
+          cp -r assets ArbitroPSP/ 2>/dev/null || true
+          zip -r ArbitroPSP_Bundle.zip ArbitroPSP
+
+          # 3. Crear Estructura de Disco para la ISO de PSP (UMD)
+          mkdir -p iso_structure/PSP_GAME/SYSDIR
+          mkdir -p iso_structure/PSP_GAME/USRDIR
+
+          # Copiar ejecutable, metadatos y assets dentro del árbol de la ISO
+          cp EBOOT.PBP iso_structure/PSP_GAME/SYSDIR/EBOOT.BIN 2>/dev/null || true
+          cp PARAM.SFO iso_structure/PSP_GAME/ 2>/dev/null || true
+          cp -r assets iso_structure/PSP_GAME/USRDIR/ 2>/dev/null || true
+
+          # Generar la imagen .ISO de PSP
+          genisoimage -o ArbitroPSP.iso -pad -r -J -V "ARBITRO_PSP" iso_structure
+
+      - name: Subir Archivos Generados (ISO y ZIP)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ArbitroPSP-Build
+          path: |
+            ArbitroPSP.iso
+            ArbitroPSP_Bundle.zip
