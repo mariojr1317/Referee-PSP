@@ -25,6 +25,27 @@ static int getNextPowerOf2(int n) {
     return p;
 }
 
+// Buscador de archivos en múltiples rutas posibles
+static FILE* abrirArchivo(const char* filename) {
+    FILE* fp = fopen(filename, "rb");
+    if (fp) return fp;
+
+    char altPath[512];
+    snprintf(altPath, sizeof(altPath), "./%s", filename);
+    fp = fopen(altPath, "rb");
+    if (fp) return fp;
+
+    snprintf(altPath, sizeof(altPath), "ArbitroPSP/%s", filename);
+    fp = fopen(altPath, "rb");
+    if (fp) return fp;
+
+    snprintf(altPath, sizeof(altPath), "ms0:/PSP/GAME/ArbitroPSP/%s", filename);
+    fp = fopen(altPath, "rb");
+    if (fp) return fp;
+
+    return NULL;
+}
+
 void initGraphics() {
     sceGuInit();
     sceGuStart(GU_DIRECT, list);
@@ -50,7 +71,6 @@ void initGraphics() {
 
 void startFrame() {
     sceGuStart(GU_DIRECT, list);
-    // Color de fondo Azul Violeta para confirmar que el motor funciona
     sceGuClearColor(0xFF662211);
     sceGuClear(GU_COLOR_BUFFER_BIT | GU_DEPTH_BUFFER_BIT);
 }
@@ -65,7 +85,7 @@ void endFrame() {
 Image* loadPNG(const char* filename) {
     png_structp png_ptr;
     png_infop info_ptr;
-    FILE* fp = fopen(filename, "rb");
+    FILE* fp = abrirArchivo(filename);
     if (!fp) return NULL;
 
     png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
