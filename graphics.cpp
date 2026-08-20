@@ -50,7 +50,8 @@ void initGraphics() {
 
 void startFrame() {
     sceGuStart(GU_DIRECT, list);
-    sceGuClearColor(0xFF111111);
+    // Color de fondo Azul Violeta para confirmar que el motor funciona
+    sceGuClearColor(0xFF662211);
     sceGuClear(GU_COLOR_BUFFER_BIT | GU_DEPTH_BUFFER_BIT);
 }
 
@@ -165,4 +166,20 @@ void drawImage(Image* img, int x, int y, int w, int h) {
     vertices[1].x = (float)(x + w); vertices[1].y = (float)(y + h); vertices[1].z = 0.0f;
 
     sceGuDrawArray(GU_SPRITES, GU_TEXTURE_32BITF | GU_COLOR_8888 | GU_VERTEX_32BITF | GU_TRANSFORM_2D, 2, NULL, vertices);
+}
+
+void drawRect(int x, int y, int w, int h, unsigned int color) {
+    sceGuDisable(GU_TEXTURE_2D);
+    Vertex* vertices = (Vertex*)sceGuGetMemory(2 * sizeof(Vertex));
+
+    vertices[0].u = 0.0f; vertices[0].v = 0.0f;
+    vertices[0].color = color;
+    vertices[0].x = (float)x; vertices[0].y = (float)y; vertices[0].z = 0.0f;
+
+    vertices[1].u = 0.0f; vertices[1].v = 0.0f;
+    vertices[1].color = color;
+    vertices[1].x = (float)(x + w); vertices[1].y = (float)(y + h); vertices[1].z = 0.0f;
+
+    sceGuDrawArray(GU_SPRITES, GU_COLOR_8888 | GU_VERTEX_32BITF | GU_TRANSFORM_2D, 2, NULL, vertices);
+    sceGuEnable(GU_TEXTURE_2D);
 }
