@@ -8,10 +8,29 @@
 #include <string.h>
 
 static int audioThreadId = -1;
-static int trackActual = 0; // 0 = detenido, 1 = ambiente 1, 2 = ambiente 2
+static int trackActual = 0;
 static bool audioRunning = true;
 
-// Hilo en segundo plano para la música de ambiente MP3
+static FILE* abrirAudio(const char* filename) {
+    FILE* fp = fopen(filename, "rb");
+    if (fp) return fp;
+
+    char altPath[512];
+    snprintf(altPath, sizeof(altPath), "./%s", filename);
+    fp = fopen(altPath, "rb");
+    if (fp) return fp;
+
+    snprintf(altPath, sizeof(altPath), "ArbitroPSP/%s", filename);
+    fp = fopen(altPath, "rb");
+    if (fp) return fp;
+
+    snprintf(altPath, sizeof(altPath), "ms0:/PSP/GAME/ArbitroPSP/%s", filename);
+    fp = fopen(altPath, "rb");
+    if (fp) return fp;
+
+    return NULL;
+}
+
 static int AudioThread(SceSize args, void *argp) {
     sceUtilityLoadModule(PSP_MODULE_AV_AVCODEC);
     sceMp3InitResource();
@@ -25,20 +44,18 @@ static int AudioThread(SceSize args, void *argp) {
         }
 
         const char* mp3File = (trackActual == 1) ? "assets/ambiente_estadio.mp3" : "assets/ambiente_estadio2.mp3";
-        FILE* fp = fopen(mp3File, "rb");
+        FILE* fp = abrirAudio(mp3File);
         if (!fp) {
             sceKernelDelayThread(100000);
             continue;
         }
 
-        // Bucle de reproducción MP3
         int trackEnCurso = trackActual;
         while (audioRunning && trackActual == trackEnCurso) {
-            // Lectura y decodificación
             short bufferPCM[2048 * 2];
             size_t bytesRead = fread(bufferPCM, 1, sizeof(bufferPCM), fp);
             if (bytesRead <= 0) {
-                fseek(fp, 0, SEEK_SET); // Bucle infinito de ambiente
+                fseek(fp, 0, SEEK_SET);
                 continue;
             }
             sceAudioOutputPannedBlocking(audioChan, PSP_AUDIO_VOLUME_MAX, PSP_AUDIO_VOLUME_MAX, bufferPCM);
@@ -75,12 +92,10 @@ void detenerAmbiente() {
     trackActual = 0;
 }
 
-// Reproducción básica de efectos WAV (PCM 16-bit)
 void reproducirWAV(const char* filename) {
-    FILE* fp = fopen(filename, "rb");
+    FILE* fp = abrirAudio(filename);
     if (!fp) return;
 
-    // Omitir encabezado RIFF/WAV (44 bytes estándar)
     fseek(fp, 44, SEEK_SET);
 
     int canal = sceAudioChReserve(PSP_AUDIO_NEXT_CHANNEL, 512, PSP_AUDIO_FORMAT_STEREO);
