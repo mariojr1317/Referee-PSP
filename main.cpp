@@ -1,6 +1,8 @@
 #include <pspkernel.h>
 #include <pspctrl.h>
 #include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 #include "audio.h"
 #include "graphics.h"
 
@@ -25,8 +27,20 @@ int SetupCallbacks(void) {
     return thid;
 }
 
-int main(void) {
+int main(int argc, char* argv[]) {
     SetupCallbacks();
+
+    // Fijar el directorio de trabajo donde se encuentra el EBOOT
+    if (argc > 0 && argv[0]) {
+        char dir[256];
+        strncpy(dir, argv[0], sizeof(dir));
+        char* lastSlash = strrchr(dir, '/');
+        if (lastSlash) {
+            *lastSlash = '\0';
+            sceIoChdir(dir);
+        }
+    }
+
     initGraphics();
 
     sceCtrlSetSamplingCycle(0);
