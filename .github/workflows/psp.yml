@@ -20,8 +20,14 @@ jobs:
 
       - name: Crear ISO y Paquete ZIP
         run: |
-          # 1. Instalar herramienta de creación de ISO
-          apt-get update && apt-get install -y genisoimage zip
+          # 1. Detectar e instalar herramientas de empaquetado (genisoimage y zip)
+          if command -v apk >/dev/null 2>&1; then
+            apk update && (apk add genisoimage zip || apk add cdrkit zip || apk add xorriso zip)
+          elif command -v apt-get >/dev/null 2>&1; then
+            apt-get update && apt-get install -y genisoimage zip
+          elif command -v pacman >/dev/null 2>&1; then
+            pacman -Sy --noconfirm cdrtools zip
+          fi
 
           # 2. Crear Paquete ZIP para tarjeta de memoria (ms0:/PSP/GAME/ArbitroPSP/)
           mkdir -p ArbitroPSP
@@ -38,8 +44,14 @@ jobs:
           cp PARAM.SFO iso_structure/PSP_GAME/ 2>/dev/null || true
           cp -r assets iso_structure/PSP_GAME/USRDIR/ 2>/dev/null || true
 
-          # Generar la imagen .ISO de PSP
-          genisoimage -o ArbitroPSP.iso -pad -r -J -V "ARBITRO_PSP" iso_structure
+          # 4. Generar la imagen .ISO de PSP
+          if command -v genisoimage >/dev/null 2>&1; then
+            genisoimage -o ArbitroPSP.iso -pad -r -J -V "ARBITRO_PSP" iso_structure
+          elif command -v mkisofs >/dev/null 2>&1; then
+            mkisofs -o ArbitroPSP.iso -pad -r -J -V "ARBITRO_PSP" iso_structure
+          elif command -v xorriso >/dev/null 2>&1; then
+            xorriso -as genisoimage -o ArbitroPSP.iso -pad -r -J -V "ARBITRO_PSP" iso_structure
+          fi
 
       - name: Subir Archivos Generados (ISO y ZIP)
         uses: actions/upload-artifact@v4
