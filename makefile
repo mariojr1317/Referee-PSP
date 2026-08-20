@@ -8,7 +8,7 @@ CFLAGS = -O2 -G0 -Wall
 CXXFLAGS = $(CFLAGS) -fno-exceptions -fno-rtti
 ASFLAGS = $(CFLAGS)
 
-LIBS = -lpspgu -lpspgum -lpng -lz -lpspaudio -lm
+LIBS = -lpspgu -lpspgum -lpng -lz -lpspaudio -lpspmp3 -lpsputility -lm
 
 EXTRA_TARGETS = EBOOT.PBP
 PSP_EBOOT_TITLE = Simulador de Arbitro PSP
