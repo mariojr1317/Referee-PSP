@@ -10,6 +10,7 @@ PSP_MODULE_INFO("ArbitroProPSP", 0, 1, 1);
 PSP_MAIN_THREAD_ATTR(THREAD_ATTR_USER);
 
 int exit_callback(int arg1, int arg2, void *common) {
+    freeAudio();
     sceKernelExitGame();
     return 0;
 }
@@ -30,6 +31,7 @@ int SetupCallbacks(void) {
 int main(int argc, char* argv[]) {
     SetupCallbacks();
 
+    // Fijar directorio de trabajo
     if (argc > 0 && argv[0]) {
         char dir[256];
         strncpy(dir, argv[0], sizeof(dir));
@@ -41,6 +43,10 @@ int main(int argc, char* argv[]) {
     }
 
     initGraphics();
+    
+    // Inicializar Motor de Audio
+    initAudio();
+    reproducirAmbiente(1); // Arranca el sonido del estadio en bucle
 
     sceCtrlSetSamplingCycle(0);
     sceCtrlSetSamplingMode(PSP_CTRL_MODE_DIGITAL);
@@ -58,11 +64,9 @@ int main(int argc, char* argv[]) {
 
         startFrame();
 
-        // Renderizado de las imágenes si existen
         if (imgArbitro) {
             drawImage(imgArbitro, 180, 0, 300, 272);
         } else {
-            // Recuadro de respaldo si no encuentra referee_main.png
             drawRect(180, 20, 280, 230, 0xFF005500); 
         }
 
@@ -70,14 +74,12 @@ int main(int argc, char* argv[]) {
         if (imgBox) {
             drawImage(imgBox, posX, 110, 70, 70);
         } else {
-            // Cuadro de selección de respaldo en amarillo
             drawRect(posX, 110, 70, 70, 0xFF00FFFF); 
         }
 
         if (imgIconoNueva) {
             drawImage(imgIconoNueva, 20, 115, 60, 60);
         } else {
-            // Icono de respaldo en blanco
             drawRect(20, 115, 60, 60, 0xFFFFFFFF); 
         }
 
@@ -99,8 +101,19 @@ int main(int argc, char* argv[]) {
             sonarSilbato();
             sceKernelDelayThread(300000);
         }
+        else if (pad.Buttons & PSP_CTRL_TRIANGLE) {
+            // Presiona TRIÁNGULO para cambiar al segundo ambiente de estadio
+            reproducirAmbiente(2);
+            sceKernelDelayThread(200000);
+        }
+        else if (pad.Buttons & PSP_CTRL_SQUARE) {
+            // Presiona CUADRADO para sacar tarjeta
+            sonarTarjeta();
+            sceKernelDelayThread(200000);
+        }
     }
 
+    freeAudio();
     freeImage(imgArbitro);
     freeImage(imgBox);
     freeImage(imgIconoNueva);
