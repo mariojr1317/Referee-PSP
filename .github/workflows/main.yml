@@ -9,9 +9,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Instalar herramienta de ISO
-        run: |
-          apt-get update
-          apt-get install -y genisoimage
+        run: apk add --no-cache cdrkit
 
       - name: Compilar C++
         run: make
