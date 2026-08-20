@@ -1,4 +1,4 @@
-name: Compilar PSP ISO y EBOOT
+name: Compilar Juego PSP
 on: [push, workflow_dispatch]
 
 jobs:
@@ -8,26 +8,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Instalar herramienta de ISO
-        run: apk add --no-cache cdrkit
-
       - name: Compilar C++
         run: make
 
-      - name: Empaquetar ISO
+      - name: Preparar Carpeta del Juego
         run: |
-          mkdir -p iso_root/PSP_GAME/SYSDIR
-          mkdir -p iso_root/PSP_GAME/USRDIR
-          echo "PSP-1000" > iso_root/UMD_DATA.BIN
-          cp PARAM.SFO iso_root/PSP_GAME/
-          cp EBOOT.PBP iso_root/PSP_GAME/SYSDIR/EBOOT.BIN
-          cp -r assets iso_root/PSP_GAME/USRDIR/
-          genisoimage -o ArbitroPSP.iso -A "PSP" -V "ARBITRO_PRO" -sysid "PSP" -r -J iso_root
+          mkdir -p ArbitroPSP
+          cp EBOOT.PBP ArbitroPSP/
+          cp -r assets ArbitroPSP/
 
-      - name: Subir Artifacts (ISO y EBOOT)
+      - name: Subir Juego Completo
         uses: actions/upload-artifact@v4
         with:
-          name: ArbitroPSP_Juego
-          path: |
-            ArbitroPSP.iso
-            EBOOT.PBP
+          name: ArbitroPSP_Juego_Completo
+          path: ArbitroPSP/
